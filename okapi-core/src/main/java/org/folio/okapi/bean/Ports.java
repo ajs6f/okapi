@@ -1,5 +1,9 @@
 package org.folio.okapi.bean;
 
+import static java.util.stream.IntStream.range;
+
+import java.util.ArrayList;
+
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
@@ -8,37 +12,21 @@ import io.vertx.core.logging.LoggerFactory;
  * When a module is deployed, a new port may be allocated for it from this list.
  *
  */
-public class Ports {
-
-  private final int port_start;
-  private final int port_end;
-  private final Boolean[] ports;
+public class Ports extends ArrayList<Integer> {
 
   private final Logger logger = LoggerFactory.getLogger("Ports");
 
   public Ports(int port_start, int port_end) {
-    this.port_start = port_start;
-    this.port_end = port_end;
-    this.ports = new Boolean[port_end - port_start];
-    for (int i = 0; i < ports.length; i++) {
-      ports[i] = false;
-    }
+    super(port_end - port_start);
+    range(port_start, port_end).forEach(this::add);
   }
 
   /**
    * Allocate a port.
-   * @return the newly allocated port number, of -1 if none available
+   * @return the newly allocated port number, or -1 if none available
    */
   public int get() {
-    for (int i = 0; i < ports.length; i++) {
-      if (ports[i] == false) {
-        ports[i] = true;
-        final int p = i + port_start;
-        logger.debug("allocate port " + p);
-        return p;
-      }
-    }
-    return -1;
+    return isEmpty() ? -1 : remove(size()-1);
   }
 
   /**
@@ -46,9 +34,9 @@ public class Ports {
    * @param p The port to release.
    */
   public void free(int p) {
-    if (p > 0) {
+    if (p > 0 && !contains(p)) {
       logger.debug("free port " + p);
-      ports[p - port_start] = false;
+      add(p);
     }
   }
 }
